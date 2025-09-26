@@ -257,7 +257,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       {sidebarOpen && (
         <ChatSidebar
@@ -285,11 +285,11 @@ export default function ChatPage() {
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-                  <Bot className="h-6 w-6 text-white" />
+                <div className="p-2 bg-primary rounded-lg">
+                  <Bot className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <h1 className="text-xl font-bold text-primary">
                     Gemini 2.0 Flash
                   </h1>
                   <p className="text-sm text-muted-foreground">AI Chat Assistant</p>
@@ -315,10 +315,10 @@ export default function ChatPage() {
         <div className="space-y-6">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="p-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6">
-                <Bot className="h-12 w-12 text-white" />
+              <div className="p-6 bg-primary rounded-full mb-6">
+                <Bot className="h-12 w-12 text-primary-foreground" />
               </div>
-              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold mb-2 text-primary">
                 Welcome to Gemini 2.0 Flash Chat
               </h2>
               <p className="text-muted-foreground mb-4 max-w-md">
@@ -343,14 +343,14 @@ export default function ChatPage() {
                 </Avatar>
               )}
               
-              <Card className={`max-w-[80%] ${message.isUser ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' : ''}`}>
+              <Card className={`max-w-[80%] ${message.isUser ? 'bg-primary text-primary-foreground' : ''}`}>
                 <CardContent className="p-4">
                   <div className="space-y-2">
                     <div className="text-sm">
                       {message.isUser ? (
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarFallback className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs">
+                            <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
                               <User className="h-3 w-3" />
                             </AvatarFallback>
                           </Avatar>
@@ -358,7 +358,7 @@ export default function ChatPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-blue-600 dark:text-blue-400">Gemini</span>
+                          <span className="font-medium text-primary">Gemini</span>
                           <Badge variant="outline" className="text-xs">
                             AI Assistant
                           </Badge>
@@ -366,7 +366,7 @@ export default function ChatPage() {
                       )}
                     </div>
                     
-                    <Separator className={message.isUser ? 'bg-blue-400' : ''} />
+                    <Separator className={message.isUser ? 'bg-primary-foreground/20' : ''} />
                     
                     <div className="text-sm">
                       {message.isUser ? (
@@ -382,7 +382,7 @@ export default function ChatPage() {
                               if (inline) {
                                 return (
                                   <code
-                                    className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-sm font-mono"
+                                    className="bg-muted px-1 py-0.5 rounded text-sm font-mono"
                                     {...props}
                                   >
                                     {children}
@@ -397,7 +397,7 @@ export default function ChatPage() {
                               return (
                                 <div className="relative group">
                                   <code
-                                    className={`${className} block bg-slate-100 dark:bg-slate-800 p-3 pr-12 rounded-lg text-sm font-mono overflow-x-auto border`}
+                                    className={`${className} block bg-muted p-3 pr-12 rounded-lg text-sm font-mono overflow-x-auto border`}
                                     {...props}
                                   >
                                     {children}
@@ -419,7 +419,7 @@ export default function ChatPage() {
                               );
                             },
                             pre: ({ children }) => (
-                              <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg text-sm font-mono overflow-x-auto border">
+                              <pre className="bg-muted p-3 rounded-lg text-sm font-mono overflow-x-auto border">
                                 {children}
                               </pre>
                             ),
@@ -449,7 +449,7 @@ export default function ChatPage() {
                               <h3 className="text-sm font-bold mb-1">{children}</h3>
                             ),
                             blockquote: ({ children }) => (
-                              <blockquote className="border-l-4 border-blue-500 pl-3 italic my-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-r">
+                              <blockquote className="border-l-4 border-primary pl-3 italic my-2 bg-primary/10 p-2 rounded-r">
                                 {children}
                               </blockquote>
                             ),
@@ -476,7 +476,7 @@ export default function ChatPage() {
               
               {message.isUser && (
                 <Avatar className="h-8 w-8 mt-1">
-                  <AvatarFallback className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs">
+                  <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
                     <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
@@ -487,14 +487,14 @@ export default function ChatPage() {
           {isLoading && (
             <div className="flex gap-3 justify-start">
               <Avatar className="h-8 w-8 mt-1">
-                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   <Bot className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                     <span className="text-sm text-muted-foreground">Gemini is thinking...</span>
                   </div>
                 </CardContent>
@@ -522,7 +522,7 @@ export default function ChatPage() {
               onClick={sendMessage}
               disabled={!inputText.trim() || isLoading}
               size="lg"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Send className="h-4 w-4" />
             </Button>
