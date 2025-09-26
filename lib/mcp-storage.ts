@@ -11,7 +11,16 @@ export class MCPStorage {
       }
       
       const parsed = JSON.parse(stored);
-      return parsed.servers.map((server: any) => ({
+      return parsed.servers.map((server: {
+        id: string;
+        name: string;
+        description: string;
+        url: string;
+        status: 'connected' | 'disconnected' | 'error';
+        lastConnected?: string;
+        createdAt: string;
+        updatedAt: string;
+      }) => ({
         ...server,
         createdAt: new Date(server.createdAt),
         updatedAt: new Date(server.updatedAt),

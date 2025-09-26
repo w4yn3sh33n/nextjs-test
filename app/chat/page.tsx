@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { ChatSidebar } from '@/components/chat-sidebar';
-import { Message, ChatSession, ChatHistory } from '@/lib/types';
+import { Message, ChatHistory } from '@/lib/types';
 import { ChatStorage } from '@/lib/chat-storage';
 
 export default function ChatPage() {
@@ -178,7 +178,7 @@ export default function ChatPage() {
                     )
                   );
                 }
-              } catch (e) {
+              } catch {
                 // Skip invalid JSON
               }
             }
@@ -219,15 +219,16 @@ export default function ChatPage() {
     setMessages([]);
   };
 
-  const extractTextFromChildren = (children: any): string => {
+  const extractTextFromChildren = (children: React.ReactNode): string => {
     if (typeof children === 'string') {
       return children;
     }
     if (Array.isArray(children)) {
       return children.map(extractTextFromChildren).join('');
     }
-    if (children && typeof children === 'object' && children.props) {
-      return extractTextFromChildren(children.props.children);
+    if (children && typeof children === 'object' && 'props' in children && children.props) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return extractTextFromChildren((children as any).props.children);
     }
     return '';
   };
@@ -330,7 +331,7 @@ export default function ChatPage() {
             </div>
           )}
           
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
               key={message.id}
               className={`flex gap-3 ${message.isUser ? 'justify-end' : 'justify-start'}`}
@@ -378,7 +379,9 @@ export default function ChatPage() {
                             rehypePlugins={[rehypeHighlight]}
                             components={{
                             // Custom styling for markdown elements
-                            code: ({ node, inline, className, children, ...props }) => {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            code: ({ className, children, ...props }: any) => {
+                              const inline = props.inline;
                               if (inline) {
                                 return (
                                   <code

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { MCPServer } from '@/lib/types';
 import { MCPStorage } from '@/lib/mcp-storage';
 
@@ -111,7 +110,7 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
 
   const handleDisconnectServer = async (serverId: string) => {
     try {
-      const response = await fetch('/api/mcp/disconnect', {
+      await fetch('/api/mcp/disconnect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

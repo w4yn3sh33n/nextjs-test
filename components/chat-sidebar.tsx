@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MessageSquare, Trash2, MoreVertical, Edit3, Check, X, Settings, Server } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Edit3, Check, X, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { ChatSession, MCPServer } from '@/lib/types';
-import { ChatStorage } from '@/lib/chat-storage';
+import { ChatSession } from '@/lib/types';
 import { MCPServerManager } from '@/components/mcp-server-manager';
 
 interface ChatSidebarProps {

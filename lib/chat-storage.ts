@@ -12,11 +12,28 @@ export class ChatStorage {
       
       const parsed = JSON.parse(stored);
       return {
-        sessions: parsed.sessions.map((session: any) => ({
+        sessions: parsed.sessions.map((session: {
+          id: string;
+          title: string;
+          summary: string;
+          messages: Array<{
+            id: string;
+            content: string;
+            isUser: boolean;
+            timestamp: string;
+          }>;
+          createdAt: string;
+          updatedAt: string;
+        }) => ({
           ...session,
           createdAt: new Date(session.createdAt),
           updatedAt: new Date(session.updatedAt),
-          messages: session.messages.map((msg: any) => ({
+          messages: session.messages.map((msg: {
+            id: string;
+            content: string;
+            isUser: boolean;
+            timestamp: string;
+          }) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           }))
