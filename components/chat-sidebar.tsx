@@ -30,6 +30,8 @@ export function ChatSidebar({
   const [editTitle, setEditTitle] = useState('');
   const [activeTab, setActiveTab] = useState<'chats' | 'mcp'>('chats');
 
+  console.log('ChatSidebar rendered with activeTab:', activeTab);
+
   const handleEditStart = (session: ChatSession) => {
     setEditingId(session.id);
     setEditTitle(session.title);
@@ -68,33 +70,51 @@ export function ChatSidebar({
     <div className="w-80 bg-sidebar border-r border-sidebar-border flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border">
-        <Button
-          onClick={onNewChat}
-          className="w-full bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground"
+        <button
+          type="button"
+          onClick={() => {
+            console.log('New Chat button clicked');
+            onNewChat();
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors cursor-pointer"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           New Chat
-        </Button>
+        </button>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-sidebar-border">
-        <Button
-          variant={activeTab === 'chats' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('chats')}
-          className="flex-1 rounded-none border-0"
+        <button
+          type="button"
+          onClick={() => {
+            console.log('Chats tab clicked');
+            setActiveTab('chats');
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${
+            activeTab === 'chats'
+              ? 'bg-gray-100 text-gray-900 border-b-2 border-blue-500 dark:bg-gray-800 dark:text-gray-100'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          }`}
         >
-          <MessageSquare className="h-4 w-4 mr-2" />
+          <MessageSquare className="h-4 w-4" />
           Chats
-        </Button>
-        <Button
-          variant={activeTab === 'mcp' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('mcp')}
-          className="flex-1 rounded-none border-0"
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            console.log('MCP Servers tab clicked');
+            setActiveTab('mcp');
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${
+            activeTab === 'mcp'
+              ? 'bg-gray-100 text-gray-900 border-b-2 border-blue-500 dark:bg-gray-800 dark:text-gray-100'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          }`}
         >
-          <Server className="h-4 w-4 mr-2" />
+          <Server className="h-4 w-4" />
           MCP Servers
-        </Button>
+        </button>
       </div>
 
       {/* Content */}

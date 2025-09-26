@@ -24,12 +24,35 @@ export interface MCPServer {
   name: string;
   description: string;
   url: string;
-  status: 'connected' | 'disconnected' | 'error';
+  transport: 'http' | 'sse' | 'stdio';
+  status: 'connected' | 'disconnected' | 'error' | 'connecting';
   lastConnected?: Date;
+  capabilities?: {
+    tools?: boolean;
+    prompts?: boolean;
+    resources?: boolean;
+  };
+  serverInfo?: {
+    name?: string;
+    version?: string;
+    description?: string;
+    mcpSupported?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface MCPServerConfig {
   servers: MCPServer[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  loading: boolean;
 }

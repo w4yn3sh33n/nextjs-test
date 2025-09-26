@@ -1,6 +1,19 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Image from "next/image";
+import { useAuthContext } from "@/components/auth-provider";
+import { ProtectedRoute } from "@/components/protected-route";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { signOut } from "@/lib/use-auth";
+
+function HomeContent() {
+  const { user } = useAuthContext();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -56,6 +69,24 @@ export default function Home() {
             Read our docs
           </a>
         </div>
+
+        {user && (
+          <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+            <div className="text-sm">
+              <p className="font-medium">안녕하세요, {user.email}님!</p>
+              <p className="text-muted-foreground">채팅 서비스를 이용하실 수 있습니다.</p>
+            </div>
+            <Button
+              onClick={handleSignOut}
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              로그아웃
+            </Button>
+          </div>
+        )}
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a
@@ -97,7 +128,7 @@ export default function Home() {
           <Image
             aria-hidden
             src="/globe.svg"
-            alt="Globe icon"
+            alt="Window icon"
             width={16}
             height={16}
           />
@@ -105,5 +136,13 @@ export default function Home() {
         </a>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <ProtectedRoute>
+      <HomeContent />
+    </ProtectedRoute>
   );
 }

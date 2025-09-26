@@ -16,12 +16,25 @@ export class MCPStorage {
         name: string;
         description: string;
         url: string;
-        status: 'connected' | 'disconnected' | 'error';
+        transport?: 'http' | 'sse' | 'stdio';
+        status: 'connected' | 'disconnected' | 'error' | 'connecting';
         lastConnected?: string;
+        capabilities?: {
+          tools?: boolean;
+          prompts?: boolean;
+          resources?: boolean;
+        };
+        serverInfo?: {
+          name?: string;
+          version?: string;
+          description?: string;
+          mcpSupported?: boolean;
+        };
         createdAt: string;
         updatedAt: string;
       }) => ({
         ...server,
+        transport: server.transport || 'http', // Default to http for backward compatibility
         createdAt: new Date(server.createdAt),
         updatedAt: new Date(server.updatedAt),
         lastConnected: server.lastConnected ? new Date(server.lastConnected) : undefined
@@ -45,6 +58,7 @@ export class MCPStorage {
     const now = new Date();
     const newServer: MCPServer = {
       ...server,
+      transport: server.transport || 'http', // Default to http if not specified
       id: `mcp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       status: 'disconnected',
       createdAt: now,

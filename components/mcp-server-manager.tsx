@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Server, Edit3, Trash2, Check, X, Wifi, WifiOff, AlertCircle, Settings } from 'lucide-react';
+import { Plus, Server, Edit3, Trash2, Check, X, Wifi, WifiOff, AlertCircle, Settings, Loader2, Zap, FileText, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MCPServer } from '@/lib/types';
 import { MCPStorage } from '@/lib/mcp-storage';
+import { mcpClientManager } from '@/lib/mcp-client';
 
 interface MCPServerManagerProps {
   onServerStatusChange?: (serverId: string, status: MCPServer['status']) => void;
@@ -20,30 +21,50 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    url: ''
+    url: '',
+    transport: 'http' as 'http' | 'sse' | 'stdio'
   });
+  const [error, setError] = useState<string | null>(null);
+
+  console.log('MCPServerManager rendered with servers:', servers.length);
 
   useEffect(() => {
-    loadServers();
+    try {
+      loadServers();
+    } catch (error) {
+      console.error('Error loading servers:', error);
+    }
   }, []);
 
   const loadServers = () => {
-    const loadedServers = MCPStorage.loadServers();
-    setServers(loadedServers);
+    try {
+      const loadedServers = MCPStorage.loadServers();
+      setServers(loadedServers);
+      setError(null);
+    } catch (error) {
+      console.error('Error loading servers:', error);
+      setError('Failed to load servers');
+      setServers([]);
+    }
   };
 
   const handleAddServer = () => {
-    if (!formData.name.trim() || !formData.url.trim()) return;
+    try {
+      if (!formData.name.trim() || !formData.url.trim()) return;
 
-    const newServer = MCPStorage.addServer({
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      url: formData.url.trim()
-    });
+      const newServer = MCPStorage.addServer({
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        url: formData.url.trim(),
+        transport: formData.transport
+      });
 
-    setServers(prev => [...prev, newServer]);
-    setFormData({ name: '', description: '', url: '' });
-    setShowAddForm(false);
+      setServers(prev => [...prev, newServer]);
+      setFormData({ name: '', description: '', url: '', transport: 'http' });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding server:', error);
+    }
   };
 
   const handleEditServer = (serverId: string) => {
@@ -52,7 +73,8 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
       setFormData({
         name: server.name,
         description: server.description,
-        url: server.url
+        url: server.url,
+        transport: server.transport
       });
       setEditingId(serverId);
     }
@@ -64,12 +86,13 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
     MCPStorage.updateServer(editingId, {
       name: formData.name.trim(),
       description: formData.description.trim(),
-      url: formData.url.trim()
+      url: formData.url.trim(),
+      transport: formData.transport
     });
 
     loadServers();
     setEditingId(null);
-    setFormData({ name: '', description: '', url: '' });
+    setFormData({ name: '', description: '', url: '', transport: 'http' });
   };
 
   const handleDeleteServer = (serverId: string) => {
@@ -81,43 +104,48 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
     const server = servers.find(s => s.id === serverId);
     if (!server) return;
 
-    try {
-      // MCP 서버 연결 시도
-      const response = await fetch('/api/mcp/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ serverId, url: server.url })
-      });
+    // Set connecting status
+    MCPStorage.updateServerStatus(serverId, 'connecting');
+    loadServers();
 
-      if (response.ok) {
-        MCPStorage.updateServerStatus(serverId, 'connected');
+    try {
+      const result = await mcpClientManager.connectToServer(server);
+      
+      if (result.success) {
+        MCPStorage.updateServer(serverId, {
+          status: 'connected',
+          serverInfo: result.serverInfo,
+          capabilities: result.serverInfo?.capabilities as {
+            tools?: boolean;
+            prompts?: boolean;
+            resources?: boolean;
+          }
+        });
         loadServers();
         onServerStatusChange?.(serverId, 'connected');
       } else {
         MCPStorage.updateServerStatus(serverId, 'error');
         loadServers();
         onServerStatusChange?.(serverId, 'error');
+        console.error('Failed to connect to MCP server:', result.error);
+        setError(`연결 실패: ${result.error}`);
+        // 5초 후 에러 메시지 자동 제거
+        setTimeout(() => setError(null), 5000);
       }
     } catch (error) {
       console.error('Error connecting to MCP server:', error);
       MCPStorage.updateServerStatus(serverId, 'error');
       loadServers();
       onServerStatusChange?.(serverId, 'error');
+      setError(`연결 오류: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // 5초 후 에러 메시지 자동 제거
+      setTimeout(() => setError(null), 5000);
     }
   };
 
   const handleDisconnectServer = async (serverId: string) => {
     try {
-      await fetch('/api/mcp/disconnect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ serverId })
-      });
-
+      await mcpClientManager.disconnectFromServer(serverId);
       MCPStorage.updateServerStatus(serverId, 'disconnected');
       loadServers();
       onServerStatusChange?.(serverId, 'disconnected');
@@ -132,6 +160,8 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
         return <Wifi className="h-4 w-4 text-green-600" />;
       case 'disconnected':
         return <WifiOff className="h-4 w-4 text-gray-400" />;
+      case 'connecting':
+        return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
     }
@@ -143,6 +173,8 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       case 'disconnected':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      case 'connecting':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
       case 'error':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
     }
@@ -214,6 +246,30 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
                 placeholder="https://example.com/mcp"
                 className="w-full px-3 py-2 border border-input rounded-md text-sm"
               />
+              <div className="mt-1 text-xs text-muted-foreground">
+                <p>테스트용 URL 예시:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>https://httpbin.org/post (HTTP 테스트)</li>
+                  <li>https://jsonplaceholder.typicode.com/posts (JSON API)</li>
+                  <li>실제 MCP 서버 URL을 입력하세요</li>
+                </ul>
+                <p className="mt-2 text-blue-600">
+                  💡 MCP 프로토콜을 지원하지 않는 서버도 연결할 수 있습니다. 
+                  서버가 실행 중이면 &quot;연결됨&quot;으로 표시됩니다.
+                </p>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Transport</label>
+              <select
+                value={formData.transport}
+                onChange={(e) => setFormData(prev => ({ ...prev, transport: e.target.value as 'http' | 'sse' | 'stdio' }))}
+                className="w-full px-3 py-2 border border-input rounded-md text-sm"
+              >
+                <option value="http">HTTP (Streamable)</option>
+                <option value="sse">SSE (Server-Sent Events)</option>
+                <option value="stdio">Stdio (Command Line)</option>
+              </select>
             </div>
             <div className="flex gap-2">
               <Button
@@ -228,7 +284,7 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
                 onClick={() => {
                   setShowAddForm(false);
                   setEditingId(null);
-                  setFormData({ name: '', description: '', url: '' });
+                  setFormData({ name: '', description: '', url: '', transport: 'http' });
                 }}
                 size="sm"
                 variant="outline"
@@ -239,6 +295,13 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+          {error}
+        </div>
       )}
 
       {/* Servers List */}
@@ -263,8 +326,12 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
                           {getStatusIcon(server.status)}
                           <span className="ml-1">
                             {server.status === 'connected' ? '연결됨' : 
-                             server.status === 'disconnected' ? '연결 안됨' : '오류'}
+                             server.status === 'disconnected' ? '연결 안됨' : 
+                             server.status === 'connecting' ? '연결 중...' : '오류'}
                           </span>
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {server.transport.toUpperCase()}
                         </Badge>
                       </div>
                       
@@ -277,6 +344,57 @@ export function MCPServerManager({ onServerStatusChange }: MCPServerManagerProps
                       <p className="text-xs text-muted-foreground font-mono">
                         {server.url}
                       </p>
+
+                      {server.serverInfo && (
+                        <div className="mt-2 p-2 bg-muted rounded text-xs">
+                          <div className="font-medium mb-1">서버 정보</div>
+                          <div className="space-y-1">
+                            {server.serverInfo.name && (
+                              <div>이름: {server.serverInfo.name}</div>
+                            )}
+                            {server.serverInfo.version && (
+                              <div>버전: {server.serverInfo.version}</div>
+                            )}
+                            {server.serverInfo.description && (
+                              <div>설명: {server.serverInfo.description}</div>
+                            )}
+                            {server.serverInfo.mcpSupported !== undefined && (
+                              <div className="flex items-center gap-1">
+                                MCP 지원: 
+                                <Badge 
+                                  variant={server.serverInfo.mcpSupported ? "default" : "secondary"}
+                                  className="text-xs"
+                                >
+                                  {server.serverInfo.mcpSupported ? "지원" : "미지원"}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {server.capabilities && (
+                        <div className="mt-2 flex gap-1">
+                          {server.capabilities.tools && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Wrench className="h-3 w-3 mr-1" />
+                              Tools
+                            </Badge>
+                          )}
+                          {server.capabilities.prompts && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Zap className="h-3 w-3 mr-1" />
+                              Prompts
+                            </Badge>
+                          )}
+                          {server.capabilities.resources && (
+                            <Badge variant="secondary" className="text-xs">
+                              <FileText className="h-3 w-3 mr-1" />
+                              Resources
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                         <span>생성: {formatDate(server.createdAt)}</span>

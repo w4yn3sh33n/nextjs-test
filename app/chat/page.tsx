@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Trash2, Copy, Check, Bot, User, Menu } from 'lucide-react';
+import { Send, Trash2, Copy, Check, Bot, User, Menu, LogOut } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -13,10 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { ChatSidebar } from '@/components/chat-sidebar';
+import { ProtectedRoute } from '@/components/protected-route';
+import { useAuthContext } from '@/components/auth-provider';
+import { signOut } from '@/lib/use-auth';
 import { Message, ChatHistory } from '@/lib/types';
 import { ChatStorage } from '@/lib/chat-storage';
 
-export default function ChatPage() {
+function ChatPageContent() {
+  const { user } = useAuthContext();
   const [chatHistory, setChatHistory] = useState<ChatHistory>({ sessions: [], currentSessionId: null });
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -24,6 +28,10 @@ export default function ChatPage() {
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -296,17 +304,40 @@ export default function ChatPage() {
                   <p className="text-sm text-muted-foreground">AI Chat Assistant</p>
                 </div>
               </div>
-              {chatHistory.sessions.length > 0 && (
+              <div className="flex items-center gap-2">
+                {user && (
+                  <div className="flex items-center gap-2 mr-4">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
+                        {user.email.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-muted-foreground hidden sm:block">
+                      {user.email}
+                    </span>
+                  </div>
+                )}
                 <Button
-                  onClick={clearAllHistory}
+                  onClick={handleSignOut}
                   variant="outline"
                   size="sm"
                   className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear All
+                  <LogOut className="h-4 w-4 mr-2" />
+                  로그아웃
                 </Button>
-              )}
+                {chatHistory.sessions.length > 0 && (
+                  <Button
+                    onClick={clearAllHistory}
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -534,5 +565,13 @@ export default function ChatPage() {
       </Card>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <ProtectedRoute>
+      <ChatPageContent />
+    </ProtectedRoute>
   );
 }
